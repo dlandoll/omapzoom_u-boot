@@ -50,8 +50,21 @@ u32 get_gpmc0_type(void)
  ****************************************************/
 u32 get_cpu_type(void)
 {
-    /* fixme, need to get register defines for 4430 */
-    return CPU_4430;
+	u32 idcode;
+	u16 hawkeye;
+
+	idcode = __raw_readl(CONTROL_ID_CODE);
+	hawkeye = (idcode >> 12) & 0xffff;
+
+	switch (hawkeye) {
+	case 0xb852:
+	case 0xb95c:
+		return CPU_4430;
+	case 0xb94e:
+		return CPU_4460;
+	default:
+		return CPU_UNKNOWN;
+	}
 }
 
 unsigned int cortex_a9_rev(void)
@@ -70,27 +83,42 @@ unsigned int cortex_a9_rev(void)
  ******************************************/
 u32 get_cpu_rev(void)
 {
-	u32 omap_rev_reg = 0;
-	u32 idcode = 0;
+	u32 omap_cpu_type;
+	u32 omap_rev_reg;
+	u32 idcode;
 
-	idcode = cortex_a9_rev();
-	if (((idcode >> 4) & 0xfff) == 0xc09) {
-		idcode &= 0xf;
-		switch (idcode) {
-		case 1:
-			return CPU_4430_ES1;
-		case 2:
-			omap_rev_reg = (__raw_readl(CONTROL_ID_CODE)  >> 28);
-			if (omap_rev_reg == 0x3)
-				return CPU_4430_ES21;
-			else if (omap_rev_reg >= 0x4)
-				return CPU_4430_ES22;
+	omap_cpu_type = get_cpu_type();
+	if (omap_cpu_type == CPU_4430) {
+		/* HACK: On OMAP4 ES1.0 and ES2.0, the efused ID code is same.
+		  This hack uses ARM vesrion check instead of IDCODE to detect
+		  ES version */
+		idcode = cortex_a9_rev();
+		if ((((idcode >> 4) & 0xfff) == 0xc09) && ((idcode & 0xf) == 1)) {
+			return OMAP4430_REV_ES1_0;
+		} else {
+			omap_rev_reg = (__raw_readl(CONTROL_ID_CODE) >> 28);
+			if (omap_rev_reg == 0)
+				return OMAP4430_REV_ES2_0;
+			else if (omap_rev_reg == 3)
+				return OMAP4430_REV_ES2_1;
+			else if (omap_rev_reg == 4)
+				return OMAP4430_REV_ES2_2;
+			else if (omap_rev_reg == 6)
+				return OMAP4430_REV_ES2_3;
 			else
-				return CPU_4430_ES20;
+				return OMAP4430_REV_UNKNOWN;
 		}
+	} else if (omap_cpu_type == CPU_4460) {
+		omap_rev_reg = (__raw_readl(CONTROL_ID_CODE) >> 28);
+		if (omap_rev_reg == 0)
+			return OMAP4460_REV_ES1_0;
+		else if (omap_rev_reg == 1)
+			return OMAP4460_REV_ES1_1;
+		else
+			return OMAP4460_REV_UNKNOWN;
+	} else {
+		return CPU_UNKNOWN;
 	}
-	return CPU_4430_ES22;
-
 }
 
 /****************************************************

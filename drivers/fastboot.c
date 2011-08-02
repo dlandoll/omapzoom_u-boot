@@ -1316,17 +1316,24 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 #if defined(CONFIG_4430SDP) || defined(CONFIG_4430PANDA)
 	cpu_rev = get_cpu_rev();
 	switch (cpu_rev) {
-		case CPU_4430_ES1:
+		case OMAP4430_REV_ES1_0:
+		case OMAP4460_REV_ES1_0:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES1.0";
 			break;
-		case CPU_4430_ES20:
+		case OMAP4460_REV_ES1_1:
+			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES1.1";
+			break;
+		case OMAP4430_REV_ES2_0:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES2.0";
 			break;
-		case CPU_4430_ES21:
+		case OMAP4430_REV_ES2_1:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES2.1";
 			break;
-		case CPU_4430_ES22:
+		case OMAP4430_REV_ES2_2:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES2.2";
+			break;
+		case OMAP4430_REV_ES2_3:
+			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES2.3";
 			break;
 		default:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "Unknown";
@@ -1334,13 +1341,13 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	}
 	cpu_type = get_device_type();
 	switch (cpu_type) {
-		case CPU_4430_GP:
+		case OMAP_DEVICE_TYPE_GP:
 			device_strings[DEVICE_STRING_PROC_TYPE]  = "GP";
 			break;
-		case  CPU_4430_EMU:
+		case  OMAP_DEVICE_TYPE_EMU:
 			device_strings[DEVICE_STRING_PROC_TYPE]  = "EMU";
 			break;
-		case  CPU_4430_HS:
+		case  OMAP_DEVICE_TYPE_SEC:
 			device_strings[DEVICE_STRING_PROC_TYPE]  = "HS";
 			break;
 		default:

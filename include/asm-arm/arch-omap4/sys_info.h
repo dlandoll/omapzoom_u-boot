@@ -36,23 +36,37 @@
 #define DDR_165		165    /* future parts */
 
 #define CPU_4430	0x4430
+#define CPU_4460	0x4460
+#define CPU_UNKNOWN	0x0
+#define OMAP44XX_CLASS	0x44
 
-/* 343x real hardware:
- *  ES1     = rev 0
+/*
+ * omap_rev bits:
+ * CPU id bits  (0730, 1510, 1710, 2422...)     [31:16]
+ * CPU revision                                 [15:08]
+ * CPU class bits (15xx, 16xx, 24xx, 34xx...)   [07:00]
  */
+#define OMAP443X_CLASS		((CPU_4430 << 16) | OMAP44XX_CLASS)
+#define OMAP4430_REV_ES1_0	(OMAP443X_CLASS | (0x00 << 8))
+#define OMAP4430_REV_ES2_0	(OMAP443X_CLASS | (0x10 << 8))
+#define OMAP4430_REV_ES2_1	(OMAP443X_CLASS | (0x20 << 8))
+#define OMAP4430_REV_ES2_2	(OMAP443X_CLASS | (0x30 << 8))
+#define OMAP4430_REV_ES2_3	(OMAP443X_CLASS | (0x40 << 8))
+#define OMAP4430_REV_UNKNOWN	(OMAP443X_CLASS | (0xff << 8))
 
-/* 343x code defines:
- * ES1     = 0+1 = 1
- * ES1     = 1+1 = 1
+#define OMAP446X_CLASS		((CPU_4460 << 16) | OMAP44XX_CLASS)
+#define OMAP4460_REV_ES1_0	(OMAP446X_CLASS | (0x10 << 8))
+#define OMAP4460_REV_ES1_1	(OMAP446X_CLASS | (0x20 << 8))
+#define OMAP4460_REV_UNKNOWN	(OMAP446X_CLASS | (0xff << 8))
+
+/*
+ * Omap device type
  */
-#define CPU_4430_ES1		1
-#define CPU_4430_ES20		2
-#define CPU_4430_ES21		3
-#define CPU_4430_ES22		4
-
-#define CPU_4430_GP		3
-#define CPU_4430_HS		2
-#define CPU_4430_EMU		1
+#define OMAP_DEVICE_TYPE_TEST		0
+#define OMAP_DEVICE_TYPE_EMU		1
+#define OMAP_DEVICE_TYPE_SEC		2
+#define OMAP_DEVICE_TYPE_GP		3
+#define OMAP_DEVICE_TYPE_BAD		4
 
 /* Currently Virtio models this one */
 #define CPU_4430_CHIPID		0x0B68A000
