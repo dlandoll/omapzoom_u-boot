@@ -744,6 +744,21 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 		/* Generic failed response */
 		sprintf(response, "FAIL");
 
+
+		/* continue
+		   Continue booting as normal (if possible) */
+		if(memcmp(cmdbuf, "continue", 8) == 0) {
+			sprintf(response, "OKAY");
+			fastboot_tx_status(response, strlen(response));
+
+			printf ("Booting kernel..\n");
+
+			do_bootd(NULL, 0, 0, NULL);
+
+			sprintf(response, "FAIL: invalid boot image");
+			ret = 0;
+		}
+
 		/* reboot 
 		   Reboot the board. */
 		if(memcmp(cmdbuf, "reboot-bootloader", 17) == 0)
