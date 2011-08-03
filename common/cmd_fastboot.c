@@ -62,6 +62,7 @@
 #include <fastboot.h>
 #include <sparse.h>
 #include <environment.h>
+#include <version.h>
 
 #if (CONFIG_FASTBOOT)
 
@@ -841,6 +842,9 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 
 			if(!strcmp(cmdbuf + get_var_length, "version")) {
 				strcpy(response + 4, FASTBOOT_VERSION);
+
+			} else if(!strcmp(cmdbuf + get_var_length, "version-bootloader")) {
+				strcpy(response + 4, U_BOOT_VERSION);
 
 			} else if(!strcmp(cmdbuf + get_var_length, "product")) {
 				if (interface.product_name)
