@@ -207,11 +207,14 @@ u32 load_mfg_info(void)
 	int j;
 	uint   addr=12;                  /* offset */
 	uint   alen=1;
-	uint   length=4;
+	uint   length=12;
 	u_char chip=0x50;               /*EEPROM addr = 0x50*/
 	uint   bus=3;
 	uint   speed=400;               /* OMAP_I2C_FAST_MODE */
+	uint   hyphen_spot = 4;
+	uint   i = 0;
 	unsigned char	linebuf[length];
+	unsigned char	mod_linebuf[length];
 	unsigned char	*cp;
 	u32	omap4_board_revision = 0x10; /* default = 1.0 */
 
@@ -219,15 +222,22 @@ u32 load_mfg_info(void)
 		if (i2c_read(chip, addr, alen, linebuf, length) == 0) {
 			cp = linebuf;
 			/* Read eeprom is so slow, so only significant bytes are considered */
-			printf("Blaze Tablet Board: 0100APPS750-");
+			printf("Blaze Tablet Board:");
 			for (j=0; j<length; j++) {
 				printf("%c", *cp);
 				cp++;
 			}
 			putc ('\n');
-			/* revision board is changing continously, in the time it is defined,
-			board part number is used instead */
-			omap4_board_revision = simple_strtoul(linebuf, NULL, 10);
+			/* Take the read version and remove the hyphen */
+			for (i = 0; i < length; i++) {
+				if (i == hyphen_spot)
+					continue;
+				else if (i > hyphen_spot)
+					mod_linebuf[i - 1] = linebuf[i];
+				else
+					mod_linebuf[i] = linebuf[i];
+			}
+			omap4_board_revision = simple_strtoul(mod_linebuf, NULL, 10);
 		}
 		else {
 			/* TODO. Because apps eeprom for Blaze is connected to I2C2
