@@ -138,6 +138,7 @@ static unsigned int current_config = 0;
 static unsigned int high_speed = 1;
 
 static unsigned int deferred_rx = 0;
+static u32 board_version;
 
 static struct usb_device_request req;
 
@@ -1012,20 +1013,30 @@ int fastboot_poll(void)
 	reg = OMAP44XX_WKUP_CTRL_BASE + CONTROL_WKUP_PAD1_FREF_CLK4_REQ;
 	pull = PTU;
 #else
-	reg = OMAP44XX_CTRL_BASE + CONTROL_PADCONF_MCSPI1_CS2;
-	pull = (1<<4);
+	/* Tablet 2 rev ID is 2158-xxx*/
+	if (board_version > 0x20EDB0) {
+		reg = OMAP44XX_CTRL_BASE + CONTROL_PADCONF_UNIPRO_TY1;
+		pull = (1 << 4) | 0x1b;
+	} else {
+		reg = OMAP44XX_CTRL_BASE + CONTROL_PADCONF_MCSPI1_CS2;
+		pull = (1 << 4);
+	}
 #endif
 
 	/* On panda blink the D1 LED in fastboot mode */
 	#define PRECEPTION_FACTOR 100000
-	if (blink  == 0x7fff + PRECEPTION_FACTOR){
+	if (blink == 0x7fff + PRECEPTION_FACTOR){
 		__raw_writew(__raw_readw(reg) | (pull), reg);
 	}
 	if (blink  == (0xffff + PRECEPTION_FACTOR)) {
-		__raw_writew(__raw_readw(reg) & (~pull), reg);
+		/* Tablet 2 rev ID is 2158-xxx */
+		if (board_version > 0x20EDB0)
+			__raw_writew(__raw_readw(reg) & (~pull | 0xb), reg);
+		else
+			__raw_writew(__raw_readw(reg) & (~pull), reg);
 		blink = 0;
 	}
-	blink ++ ;
+	blink++ ;
 
 
 	/* Look at the interrupt registers */
@@ -1272,6 +1283,8 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	u8 devctl;
 	int cpu_rev = 0;
 	int cpu_type = 0;
+
+	board_version = load_mfg_info();
 
 	device_strings[DEVICE_STRING_MANUFACTURER_INDEX]  = "Texas Instruments";
 #if defined (CONFIG_3430ZOOM2)

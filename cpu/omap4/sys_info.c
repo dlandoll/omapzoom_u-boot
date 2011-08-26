@@ -221,13 +221,6 @@ u32 load_mfg_info(void)
 	if (select_bus(bus,speed) == 0 ) { /* configure I2C4 */
 		if (i2c_read(chip, addr, alen, linebuf, length) == 0) {
 			cp = linebuf;
-			/* Read eeprom is so slow, so only significant bytes are considered */
-			printf("Blaze Tablet Board:");
-			for (j=0; j<length; j++) {
-				printf("%c", *cp);
-				cp++;
-			}
-			putc ('\n');
 			/* Take the read version and remove the hyphen */
 			for (i = 0; i < length; i++) {
 				if (i == hyphen_spot)
@@ -245,7 +238,6 @@ u32 load_mfg_info(void)
 			   running on a Blaze/SDP board. It is a temporal solution
 			   in the time apps eeprom for tablet is connected to I2C2
 			   or a better decision is taken */
-			puts ("Blaze/SDP Board.\n");
 			omap4_board_revision = 0x10;
 		}
 	}
