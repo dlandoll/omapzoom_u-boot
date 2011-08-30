@@ -35,6 +35,7 @@
 #include <fastboot.h>
 #include <asm/byteorder.h>
 #include <mmc.h>
+#include <asm/io.h>
 
  /*cmd_boot.c*/
  extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
@@ -98,6 +99,9 @@ static void print_type (image_header_t *hdr);
 #ifdef __I386__
 image_header_t *fake_header(image_header_t *hdr, void *ptr, int size);
 #endif
+
+#define DIE_ID_REG_BASE		(OMAP44XX_L4_IO_BASE + 0x2000)
+#define DIE_ID_REG_OFFSET		0x200
 
 /*
  *  Continue booting an OS image; caller already has:
@@ -1428,6 +1432,10 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	char *ptn = "boot";
 	int mmcc = -1;
 	boot_img_hdr *hdr = (void*) boothdr;
+	static char device_serial[38];
+	unsigned int val[4] = { 0 };
+	unsigned int reg = 0;
+
 
 	if (argc < 2)
 		return -1;
@@ -1504,7 +1512,17 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
-	
+
+#if (CONFIG_OMAP4_ANDROID_CMD_LINE)
+	reg = DIE_ID_REG_BASE + DIE_ID_REG_OFFSET;
+	val[0] = __raw_readl(reg);
+	val[1] = __raw_readl(reg + 0x8);
+	val[2] = __raw_readl(reg + 0xC);
+	val[3] = __raw_readl(reg + 0x10);
+
+	sprintf(hdr->cmdline, "androidboot.serialno=%08X%08X", val[3], val[2]);
+#endif
+
 	do_booti_linux(hdr);
 
 	puts ("booti: Control returned to monitor - resetting...\n");

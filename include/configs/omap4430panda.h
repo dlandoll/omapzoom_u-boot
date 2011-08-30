@@ -151,6 +151,7 @@
 	" init=/init vram=32M omapfb.vram=0:16M androidboot.console=ttyO2"
 
 #define CONFIG_BOOTCOMMAND "booti mmc0"
+#define CONFIG_OMAP4_ANDROID_CMD_LINE 1
 
 #endif
 
