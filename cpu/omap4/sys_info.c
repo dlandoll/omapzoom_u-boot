@@ -112,7 +112,7 @@ u32 get_cpu_rev(void)
 		omap_rev_reg = (__raw_readl(CONTROL_ID_CODE) >> 28);
 		if (omap_rev_reg == 0)
 			return OMAP4460_REV_ES1_0;
-		else if (omap_rev_reg == 1)
+		else if (omap_rev_reg == 2)
 			return OMAP4460_REV_ES1_1;
 		else
 			return OMAP4460_REV_UNKNOWN;
