@@ -1514,13 +1514,19 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 
 #if (CONFIG_OMAP4_ANDROID_CMD_LINE)
-	reg = DIE_ID_REG_BASE + DIE_ID_REG_OFFSET;
-	val[0] = __raw_readl(reg);
-	val[1] = __raw_readl(reg + 0x8);
-	val[2] = __raw_readl(reg + 0xC);
-	val[3] = __raw_readl(reg + 0x10);
-
-	sprintf(hdr->cmdline, "androidboot.serialno=%08X%08X", val[3], val[2]);
+	if (1) {
+		char serial_str[128];
+		unsigned serial_len;
+		reg = DIE_ID_REG_BASE + DIE_ID_REG_OFFSET;
+		val[0] = __raw_readl(reg);
+		val[1] = __raw_readl(reg + 0x8);
+		val[2] = __raw_readl(reg + 0xC);
+		val[3] = __raw_readl(reg + 0x10);
+		serial_len = sprintf(serial_str, " androidboot.serialno=%08X%08X",
+					val[3], val[2]);
+		if(sizeof(hdr->cmdline) >= (serial_len + strlen(hdr->cmdline) + 1))
+			strcat(hdr->cmdline, serial_str);
+	}
 #endif
 
 	do_booti_linux(hdr);
