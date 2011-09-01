@@ -70,6 +70,9 @@
 /* Android mkbootimg format*/
 #include <bootimg.h>
 
+
+#include <version.h>
+
 /*
  * Some systems (for example LWMON) have very short watchdog periods;
  * we must make sure to split long operations like memmove() or
@@ -1514,8 +1517,11 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 
 #if (CONFIG_OMAP4_ANDROID_CMD_LINE)
+	char uboot_version_string[128] = U_BOOT_VERSION;
 	char serial_str[128];
 	unsigned serial_len;
+	char boot_str[128];
+	unsigned boot_len;
 
 	reg = DIE_ID_REG_BASE + DIE_ID_REG_OFFSET;
 	val[0] = __raw_readl(reg);
@@ -1528,6 +1534,13 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if(sizeof(hdr->cmdline) >= (serial_len + strlen(hdr->cmdline) + 1))
 		strcat(hdr->cmdline, serial_str);
+
+	uboot_version_string[6] = '_';
+	boot_len = sprintf(boot_str, " androidboot.bootloader=%s",
+			uboot_version_string);
+
+	if(sizeof(hdr->cmdline) >= (boot_len + strlen(hdr->cmdline) + 1))
+		strcat(hdr->cmdline, boot_str);
 #endif
 
 	do_booti_linux(hdr);
