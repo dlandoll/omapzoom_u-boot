@@ -450,18 +450,18 @@ int i2c_write(uchar chip, uint addr, int alen, uchar * buffer, int len)
 	int i;
 
 	if (alen > 1) {
-		printf("I2C read: addr len %d not supported\n", alen);
+		printf("I2C write: addr len %d not supported\n", alen);
 		return 1;
 	}
 
 	if (addr + len > 256) {
-		printf("I2C read: address out of range\n");
+		printf("I2C write: address out of range\n");
 		return 1;
 	}
 
 	for (i = 0; i < len; i++) {
 		if (i2c_write_byte(chip, addr + i, buffer[i])) {
-			printf("I2C read: I/O error\n");
+			printf("I2C write: I/O error\n");
 			i2c_init(i2c_speed, CFG_I2C_SLAVE);
 			return 1;
 		}
