@@ -1005,13 +1005,19 @@ int fastboot_poll(void)
 	static u32 blink = 0;
 	u32 reg = 0x4A326000;
 	u8 pull = 0;
+	int cpu_rev = get_cpu_rev();
 
 #define OMAP44XX_WKUP_CTRL_BASE 0x4A31E000
 #define OMAP44XX_CTRL_BASE 0x4A100000
 
 #if defined(CONFIG_4430PANDA)
-	reg = OMAP44XX_WKUP_CTRL_BASE + CONTROL_WKUP_PAD1_FREF_CLK4_REQ;
-	pull = PTU;
+	if (cpu_rev >= OMAP4460_REV_ES1_0) {
+		reg = OMAP44XX_CTRL_BASE + CONTROL_PADCONF_ABE_MCBSP2_CLKX;
+		pull = (1 << 4) | 0x1b;
+	} else {
+		reg = OMAP44XX_WKUP_CTRL_BASE + CONTROL_WKUP_PAD1_FREF_CLK4_REQ;
+		pull = PTU;
+	}
 #else
 	/* Tablet 2 rev ID is 2158-xxx*/
 	if (board_version > 0x20EDB0) {
@@ -1030,7 +1036,7 @@ int fastboot_poll(void)
 	}
 	if (blink  == (0xffff + PRECEPTION_FACTOR)) {
 		/* Tablet 2 rev ID is 2158-xxx */
-		if (board_version > 0x20EDB0)
+		if (board_version > 0x20EDB0 || cpu_rev >= OMAP4460_REV_ES1_0)
 			__raw_writew(__raw_readw(reg) & (~pull | 0xb), reg);
 		else
 			__raw_writew(__raw_readw(reg) & (~pull), reg);
@@ -1189,6 +1195,8 @@ int fastboot_preboot(void)
 #endif
 
 #if defined(CONFIG_OMAP44XX)
+#if defined(CONFIG_4430SDP)
+/* Only blaze and sdp have keyboards why check for other devices */
 #define KBD_IRQSTATUS		(0x4a31c018)
 #define KBD_STATEMACHINE	(0x4a31c038)
 #define KBD_FULLCODE31_0	(0x4a31c044)
@@ -1208,12 +1216,23 @@ int fastboot_preboot(void)
 			break;
 		}
 	}
+#endif /* Endif for 4430sdp */
 
-	/* On Panda: GPIO_121 button pressed causes to enter fastboot */
 #if defined(CONFIG_4430PANDA)
-	if (!(__raw_readl(OMAP44XX_GPIO4_BASE + DATA_IN_OFFSET) & (1<<25))){
-		printf("Panda: GPIO_121 pressed: entering fastboot....\n");
-		return 1;
+	/* On Panda: 4430: GPIO_121 button pressed causes to enter fastboot
+	 * 	     4460: GPIO_113 button pressed causes to enter fastboot */
+	int cpu_rev = get_cpu_rev();
+
+	if (cpu_rev >= OMAP4460_REV_ES1_0) {
+		if (!(__raw_readl(OMAP44XX_GPIO4_BASE + DATA_IN_OFFSET) & (1<<17))){
+			printf("Panda: GPIO_113 pressed: entering fastboot....\n");
+			return 1;
+		}
+	} else {
+		if (!(__raw_readl(OMAP44XX_GPIO4_BASE + DATA_IN_OFFSET) & (1<<25))){
+			printf("Panda: GPIO_121 pressed: entering fastboot....\n");
+			return 1;
+		}
 	}
 #endif
 
