@@ -49,7 +49,7 @@ int mmc_compare(unsigned mmcc, unsigned char *src, unsigned sector, unsigned len
 }
 
 
-int _unsparse(unsigned char *source, u32 sector, u32 section_size,
+int _unsparse(unsigned char *source, u32 sector, u64 section_size,
 	      unsigned mmcc,
 	      int (*WRITE)(unsigned mwcc, unsigned char *src,
 			   unsigned sector, unsigned len))
@@ -146,7 +146,8 @@ int _unsparse(unsigned char *source, u32 sector, u32 section_size,
 	return 0;
 }
 
-u8 do_unsparse(unsigned char *source, u32 sector, u32 section_size, char *slot_no)
+u8 do_unsparse(unsigned char *source, u32 sector,
+					u64 section_size, char *slot_no)
 {
 	unsigned mmcc = simple_strtoul(slot_no, NULL, 16);
 	if (_unsparse(source, sector, section_size, mmcc, mmc_write))
