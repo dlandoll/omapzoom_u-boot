@@ -10,6 +10,7 @@
  */
 
 #include <config.h>
+#include <exports.h>
 
 #ifdef CFG_NS16550
 
@@ -19,7 +20,45 @@
 #define MCRVAL (MCR_DTR | MCR_RTS)			/* RTS/DTR */
 #define FCRVAL (FCR_FIFO_EN | FCR_RXSR | FCR_TXSR)	/* Clear & enable FIFOs */
 
-void NS16550_init (NS16550_t com_port, int baud_divisor)
+#define LSR_DATA_INOUT (LSR_DR | LSR_TEMT | LSR_THRE)
+#define LSR_DATA_EMPTY (LSR_TEMT | LSR_THRE)
+#define ERRATA_I202_TIMEOUT 5
+
+/*
+ * Work Around for Errata i202 (3430 - 1.12, 3630 - 1.6)
+ * The access to uart register after MDR1 Access
+ * causes UART to corrupt data.
+ *
+ * Need a delay =
+ * 5 L4 clock cycles + 5 UART functional clock cycle (@48MHz = ~0.2uS)
+ * give 5 times as much
+ *
+ * uart_no : Should be a Zero Based Index Value always.
+ */
+
+void omap_uart_mdr1_errataset(NS16550_t com_port, unsigned char mdr1_val,
+				unsigned char fcr_val)
+{
+	/* 10 retries, in this the FiFO's should get cleared */
+	unsigned char timeout = ERRATA_I202_TIMEOUT;
+
+	com_port->mdr1 = mdr1_val;
+	udelay(1);
+	com_port->fcr = fcr_val;
+
+	/* Wait for FIFO to empty: when empty, RX bit is 0 and TX bits is 1. */
+	while ((com_port->lsr & LSR_DATA_INOUT) != LSR_DATA_EMPTY) {
+		timeout--;
+		if (!timeout) {
+			/* Should *never* happen. we warn and carry on */
+			printf("Errata i202: timedout %x\n", com_port->lsr);
+			break;
+		}
+		udelay(1);
+	}
+}
+
+void NS16550_init(NS16550_t com_port, int baud_divisor)
 {
 	com_port->ier = 0x00;
 #if defined(CONFIG_OMAP) && !defined(CONFIG_3430ZOOM2)
@@ -40,13 +79,14 @@ void NS16550_init (NS16550_t com_port, int baud_divisor)
 	com_port->dlm = (baud_divisor >> 8) & 0xff;
 	com_port->lcr = LCRVAL;
 	com_port->mcr = MCRVAL;
-	com_port->fcr = FCRVAL;
 
 #if defined(CONFIG_OMAP) && !defined(CONFIG_3430ZOOM2)
 #if defined(CONFIG_APTIX)
-	com_port->mdr1 = 3;	/* /13 mode so Aptix 6MHz can hit 115200 */
+	/* 13 mode so Aptix 6MHz can hit 115200 */
+	omap_uart_mdr1_errataset(com_port, 3, FCRVAL);
 #else
-	com_port->mdr1 = 0;	/* /16 is proper to hit 115200 with 48MHz */
+	/* 16 is proper to hit 115200 with 48MHz */
+	omap_uart_mdr1_errataset(com_port, 0, FCRVAL);
 #endif
 #endif
 }

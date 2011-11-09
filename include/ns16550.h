@@ -97,10 +97,15 @@ struct NS16550 {
 	int pad6:24;
 	unsigned char msr;		/* 6 */
 	int pad7:24;
-	unsigned char scr;		/* 7 */
+	unsigned char tlr;		/* 7 */
 	int pad8:24;
+	unsigned char mdr1;		/* 8 mode select reset TL16C750*/
 #if defined(CONFIG_OMAP)
-	unsigned char mdr1;		/* mode select reset TL16C750*/
+	int pad9:24;
+	unsigned int pad[12];		/* 9 - 20 */
+	unsigned char sysc;		/* 21 */
+	int pad10:24;
+	unsigned char syss;		/* 22 */
 #endif
 #ifdef CONFIG_OMAP1510
 	int pad9:24;
