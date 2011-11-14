@@ -46,6 +46,9 @@
 #define OTG_SYSCONFIG 0x4A0AB404
 #define OTG_INTERFSEL 0x4A0AB40C
 #define USBOTGHS_CONTROL 0x4A00233C
+#define CONTROL_DEV_CONF 0x4A002300
+
+#define USBPHY_PD 0x1
 
 #include "usb_debug_macros.h"
 
@@ -71,6 +74,7 @@ static volatile u8  *bulk_fifo  = (volatile u8  *) OMAP34XX_USB_FIFO(BULK_ENDPOI
 static volatile u32 *otg_sysconfig = (volatile u32  *)OTG_SYSCONFIG;
 static volatile u32 *otg_interfsel = (volatile u32  *)OTG_INTERFSEL;
 static volatile u32 *otghs_control = (volatile u32  *)USBOTGHS_CONTROL;
+static volatile u32 *control_dev_conf = (volatile u32  *)CONTROL_DEV_CONF;
 
 #define DMA_CHANNEL 1
 static volatile u8  *peri_dma_intr	= (volatile u8  *) OMAP_USB_DMA_INTR;
@@ -1165,6 +1169,9 @@ int fastboot_poll(void)
 		}
 		if (intrusb & OMAP34XX_USB_INTRUSB_SUSPEND)
 		{
+			/* USB cable disconnected, reset faddr */
+			faddr = 0xff;
+
 			ret = fastboot_suspend ();
 			if (ret)
 				return ret;
@@ -1442,6 +1449,7 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	int cpu_rev = 0;
 	int cpu_type = 0;
 	int cpu_version = 0;
+	u32 usb_phy_power_down;
 
 	board_version = load_mfg_info();
 
@@ -1561,7 +1569,16 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	/* now set better defaults */
 	*otg_sysconfig = (0x1008);
 
-	if (*otghs_control != 0x15) {
+	usb_phy_power_down = *control_dev_conf & USBPHY_PD;
+
+	if(usb_phy_power_down)
+	{
+		 // poweron usb phy
+		 *control_dev_conf &= ~USBPHY_PD;
+		 udelay(200000);
+	}
+
+	if ((*otghs_control != 0x15) || usb_phy_power_down) {
 		fastboot_reset();
 
 		*otg_interfsel &= 0;
