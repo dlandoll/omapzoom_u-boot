@@ -1159,10 +1159,14 @@ int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
 
 	return ret;
 }
+extern char * get_partition_sz(char *buf, const char *partname);
 
 int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 {
 	/* Place board specific variables here */
+	if (!strcmp(rx_buffer, "userdata_size")){
+		strcpy(tx_buffer, get_partition_sz(tx_buffer, "userdata"));
+	}
 	return 0;
 }
 

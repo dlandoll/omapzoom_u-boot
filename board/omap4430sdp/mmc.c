@@ -289,6 +289,64 @@ static int do_format(void)
 
 	return 0;
 }
+/**
+*  get_partition_sz: Returns size of requested paritition in eMMC
+* @buf: Caller buffer pointer the size will be returned in
+* @partname: partittion name being requested
+*/
+char * get_partition_sz(char *buf, const char *partname)
+{
+	struct ptable *ptbl = &the_ptable;
+	struct efi_header *hdr = &ptbl->header;
+	struct efi_entry *entry = ptbl->entry;
+	unsigned n, i;
+	char curr_partname[EFI_NAMELEN];
+	u64 fist_lba, last_lba, sz;
+	u32 crc_orig;
+	u32 crc;
+	u32 *szptr = (u32 *) &sz;
+
+	if (mmc_read(1, 0,  (void *)ptbl, sizeof(struct ptable)) != 1){
+		printf("\n ERROR Reading Partition Table \n");
+		return buf;
+	}
+
+	/*Make sure there is a legit partition table*/
+	if (load_ptbl()){
+		printf("\n INVALID PARTITION TABLE \n");
+		return buf;
+	}
+
+	/*crc needs to be computed with crc zeroed out.*/
+	crc_orig = hdr->crc32;
+	hdr->crc32 = 0;
+	crc = crc32(0,0,0);
+	crc = crc32(0, (void *) &ptbl->header, sizeof(ptbl->header));
+	if (crc != crc_orig){
+		printf("\n INVALID HEADER CRC!!\n");
+		return buf;
+	}
+
+	for (n=0; n < EFI_ENTRIES; n++, entry++) {
+		for (i = 0; i < EFI_NAMELEN; i++)
+			curr_partname[i] = (char) entry->name[i];
+		if (!strcmp(curr_partname, partname)){
+			if (entry->last_lba < entry->first_lba){
+				printf("\n REDICULOUS LENGTH!! \n");
+				break;
+			}
+			sz = (entry->last_lba - entry->first_lba)/2;
+			if (sz >= 0xFFFFFFFF)
+				sprintf(buf, "0x%08x , %08x KB", szptr[1], szptr[0]);
+			else
+				sprintf(buf, "%d KB", szptr[0]);
+
+			break;
+		}
+	}
+	return buf;
+}
+
 
 int fastboot_oem(const char *cmd)
 {
