@@ -811,7 +811,7 @@ static int rx_handler (const unsigned char *buffer, unsigned int buffer_size)
 			/* Clear all reset reasons */
 			__raw_writel(0xfff, PRM_RSTST);
 
-			strcpy(PUBLIC_SAR_RAM_1_FREE, "reboot-bootloader");
+			strcpy(PUBLIC_SAR_RAM_1_FREE, "bootloader");
 
 			/* now warm reset the silicon */
 			__raw_writel(PRM_RSTCTRL_RESET_WARM_BIT,

@@ -1282,14 +1282,17 @@ start_recovery:
 
 			printf("\nfastboot: Error: Invalid recovery img\n");
 			return 0;
+		} else if (!strcmp(PUBLIC_SAR_RAM_1_FREE, "off")) {
+			fastboot_shutdown();
+		} else if (!strcmp(PUBLIC_SAR_RAM_1_FREE, "bootloader")) {
+			/* Warm reset case
+			 * Case: %fastboot reboot-bootloader
+			 * Case: %adb reboot bootloader
+			 * Case: %adb reboot reboot-bootloader
+			 */
+			return 1;
 		}
-
-		/* Warm reset case
-		 * Case: %fastboot reboot-bootloader
-		 * Case: %adb reboot bootloader
-		 * Case: %adb reboot reboot-bootloader
-		 */
-		return 1;
+		return 0;
 	}
 
 #endif
