@@ -776,10 +776,8 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 		   Get common fastboot variables
 		   Board has a chance to handle other variables */
 		if(memcmp(cmdbuf, "getvar:", 7) == 0) {
-			strcpy(response,"OKAY");
-			fastboot_getvar(cmdbuf + 7, response + 4);
-			ret = 0;
-			goto done;
+			fastboot_getvar(cmdbuf + 7, response);
+			return 0;
 		}
 
 		/* %fastboot oem <cmd> */
