@@ -38,6 +38,7 @@
 #include <fastboot.h>
 #include <twl4030.h>
 #include <twl6030.h>
+#include <version.h>
 
 
 #if defined(CONFIG_FASTBOOT)
@@ -1244,10 +1245,29 @@ extern char * get_partition_sz(char *buf, const char *partname);
 
 int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 {
-	/* Place board specific variables here */
-	if (!strcmp(rx_buffer, "userdata_size")){
+	if(!strcmp(rx_buffer, "version")) {
+		strcpy(tx_buffer, FASTBOOT_VERSION);
+	} else if(!strcmp(rx_buffer, "version-bootloader")) {
+		strcpy(tx_buffer, U_BOOT_VERSION);
+	} else if(!strcmp(rx_buffer, "product")) {
+		if (fastboot_interface->product_name)
+			strcpy(tx_buffer, fastboot_interface->product_name);
+	} else if(!strcmp(rx_buffer, "serialno")) {
+		if (fastboot_interface->serial_no)
+			strcpy(tx_buffer, fastboot_interface->serial_no);
+	} else if(!strcmp(rx_buffer, "downloadsize")) {
+		if (fastboot_interface->transfer_buffer_size)
+			sprintf(tx_buffer, "%08x", fastboot_interface->transfer_buffer_size);
+	} else if(!strcmp(rx_buffer, "cpurev")) {
+		if (fastboot_interface->proc_rev)
+			strcpy(tx_buffer, fastboot_interface->proc_rev);
+	} else if(!strcmp(rx_buffer, "secure")) {
+		if (fastboot_interface->proc_type)
+			strcpy(tx_buffer, fastboot_interface->proc_type);
+	} else if (!strcmp(rx_buffer, "userdata_size")) {
 		strcpy(tx_buffer, get_partition_sz(tx_buffer, "userdata"));
 	}
+
 	return 0;
 }
 
