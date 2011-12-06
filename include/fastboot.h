@@ -143,6 +143,13 @@ struct cmd_fastboot_interface
 	   Set by board */
 	char *proc_type;
 
+	/* A getvar string for the processor type
+	   this can be OMAP4430, OMAP4460 ...
+	   It can have a maximum of 60 characters
+
+	   Set by board */
+	char *proc_version;
+
 	/* To determine the storage type NAND or EMMC */
 	storage_medium_type storage_medium;
 

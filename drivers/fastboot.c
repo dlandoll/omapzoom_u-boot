@@ -99,7 +99,8 @@ static volatile u32 *peri_dma_count	= (volatile u32 *) OMAP_USB_DMA_COUNT_CH(DMA
 #define DEVICE_STRING_MANUFACTURER_INDEX  5
 #define DEVICE_STRING_PROC_REVISION       6
 #define DEVICE_STRING_PROC_TYPE           7
-#define DEVICE_STRING_MAX_INDEX           DEVICE_STRING_PROC_TYPE
+#define DEVICE_STRING_PROC_VERSION        8
+#define DEVICE_STRING_MAX_INDEX           DEVICE_STRING_PROC_VERSION
 #define DEVICE_STRING_LANGUAGE_ID         0x0409 /* English (United States) */
 
 /* Define this to use 1.1 / fullspeed */
@@ -1267,6 +1268,9 @@ int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 	} else if(!strcmp(rx_buffer, "secure")) {
 		if (fastboot_interface->proc_type)
 			strcpy(all_response + strlen(all_response), fastboot_interface->proc_type);
+	} else if(!strcmp(rx_buffer, "cpu")) {
+		if (fastboot_interface->proc_version)
+			strcpy(all_response + strlen(all_response), fastboot_interface->proc_version);
 	} else if(!strcmp(rx_buffer, "userdata_size")) {
 		strcpy(all_response + strlen(all_response), get_partition_sz(all_response, "userdata"));
 	} else if(!strcmp(rx_buffer, "all")) {
@@ -1275,8 +1279,8 @@ int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		strcpy(all_response + strlen(all_response), fastboot_interface->product_name);
 		fastboot_tx_status(all_response, strlen(all_response));
 		strcpy(all_response, "INFO");
-		strcpy(all_response + strlen(all_response), "serialno: ");
-		strcpy(all_response + strlen(all_response), fastboot_interface->serial_no);
+		strcpy(all_response + strlen(all_response), "cpu: ");
+		strcpy(all_response + strlen(all_response), fastboot_interface->proc_version);
 		fastboot_tx_status(all_response, strlen(all_response));
 		strcpy(all_response, "INFO");
 		strcpy(all_response + strlen(all_response), "cpurev: ");
@@ -1285,6 +1289,10 @@ int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		strcpy(all_response, "INFO");
 		strcpy(all_response + strlen(all_response), "secure: ");
 		strcpy(all_response + strlen(all_response), fastboot_interface->proc_type);
+		fastboot_tx_status(all_response, strlen(all_response));
+		strcpy(all_response, "INFO");
+		strcpy(all_response + strlen(all_response), "serialno: ");
+		strcpy(all_response + strlen(all_response), fastboot_interface->serial_no);
 		fastboot_tx_status(all_response, strlen(all_response));
 		strcpy(all_response, "OKAY");
 	}
@@ -1433,6 +1441,7 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	u8 devctl;
 	int cpu_rev = 0;
 	int cpu_type = 0;
+	int cpu_version = 0;
 
 	board_version = load_mfg_info();
 
@@ -1477,6 +1486,15 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	device_strings[DEVICE_STRING_INTERFACE_INDEX]     = "Android Fastboot";
 
 #if defined(CONFIG_4430SDP) || defined(CONFIG_4430PANDA)
+
+	cpu_version = get_cpu_type();
+	if (cpu_version == CPU_4430)
+		device_strings[DEVICE_STRING_PROC_VERSION] = "OMAP4430";
+	else if (cpu_version == CPU_4460)
+		device_strings[DEVICE_STRING_PROC_VERSION] = "OMAP4460";
+	else
+		device_strings[DEVICE_STRING_PROC_VERSION] = "Unknown";
+
 	cpu_rev = get_cpu_rev();
 	switch (cpu_rev) {
 		case OMAP4430_REV_ES1_0:
@@ -1528,6 +1546,7 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	fastboot_interface->storage_medium                = EMMC;
 	fastboot_interface->proc_rev			  = device_strings[DEVICE_STRING_PROC_REVISION];
 	fastboot_interface->proc_type			  = device_strings[DEVICE_STRING_PROC_TYPE];
+	fastboot_interface->proc_version		  = device_strings[DEVICE_STRING_PROC_VERSION];
 #else
 	fastboot_interface->storage_medium                = NAND;
 #endif
