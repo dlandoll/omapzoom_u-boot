@@ -238,6 +238,7 @@ static struct partition partitions[] = {
 	{ "misc", 128 },
 	{ "-", 384 },
 	{ "efs", 16384 },
+	{ "crypto", 16 },
 	{ "recovery", 8*1024 },
 	{ "boot", 8*1024 },
 	{ "system", 512*1024 },
