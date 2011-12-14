@@ -1279,7 +1279,7 @@ int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		if (fastboot_interface->proc_version)
 			strcpy(all_response + strlen(all_response), fastboot_interface->proc_version);
 	} else if(!strcmp(rx_buffer, "userdata_size")) {
-		strcpy(all_response + strlen(all_response), get_partition_sz(all_response, "userdata"));
+		strcpy(all_response + strlen(all_response), get_partition_sz(all_response + strlen(all_response), "userdata"));
 	} else if(!strcmp(rx_buffer, "all")) {
 		strcpy(all_response, "INFO");
 		strcpy(all_response + strlen(all_response), "product: ");
