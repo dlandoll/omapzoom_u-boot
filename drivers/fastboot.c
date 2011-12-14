@@ -1500,6 +1500,8 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 		device_strings[DEVICE_STRING_PROC_VERSION] = "OMAP4430";
 	else if (cpu_version == CPU_4460)
 		device_strings[DEVICE_STRING_PROC_VERSION] = "OMAP4460";
+	else if (cpu_version == CPU_4470)
+		device_strings[DEVICE_STRING_PROC_VERSION] = "OMAP4470";
 	else
 		device_strings[DEVICE_STRING_PROC_VERSION] = "Unknown";
 
@@ -1507,6 +1509,7 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	switch (cpu_rev) {
 		case OMAP4430_REV_ES1_0:
 		case OMAP4460_REV_ES1_0:
+		case OMAP4470_REV_ES1_0:
 			device_strings[DEVICE_STRING_PROC_REVISION]  = "ES1.0";
 			break;
 		case OMAP4460_REV_ES1_1:

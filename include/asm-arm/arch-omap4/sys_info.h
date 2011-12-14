@@ -37,6 +37,7 @@
 
 #define CPU_4430	0x4430
 #define CPU_4460	0x4460
+#define CPU_4470	0x4470
 #define CPU_UNKNOWN	0x0
 #define OMAP44XX_CLASS	0x44
 
@@ -58,6 +59,10 @@
 #define OMAP4460_REV_ES1_0	(OMAP446X_CLASS | (0x10 << 8))
 #define OMAP4460_REV_ES1_1	(OMAP446X_CLASS | (0x20 << 8))
 #define OMAP4460_REV_UNKNOWN	(OMAP446X_CLASS | (0xff << 8))
+
+#define OMAP447X_CLASS		((CPU_4470 << 16) | OMAP44XX_CLASS)
+#define OMAP4470_REV_ES1_0	(OMAP447X_CLASS | (0x10 << 8))
+#define OMAP4470_REV_UNKNOWN	(OMAP447X_CLASS | (0xff << 8))
 
 /*
  * Omap device type

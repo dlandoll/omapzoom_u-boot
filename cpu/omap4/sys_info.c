@@ -62,6 +62,8 @@ u32 get_cpu_type(void)
 		return CPU_4430;
 	case 0xb94e:
 		return CPU_4460;
+	case 0xb975:
+		return CPU_4470;
 	default:
 		return CPU_UNKNOWN;
 	}
@@ -116,6 +118,12 @@ u32 get_cpu_rev(void)
 			return OMAP4460_REV_ES1_1;
 		else
 			return OMAP4460_REV_UNKNOWN;
+	} else if (omap_cpu_type == CPU_4470) {
+		omap_rev_reg = (__raw_readl(CONTROL_ID_CODE) >> 28);
+		if (omap_rev_reg == 0)
+			return OMAP4470_REV_ES1_0;
+		else
+			return OMAP4470_REV_UNKNOWN;
 	} else {
 		return CPU_UNKNOWN;
 	}
