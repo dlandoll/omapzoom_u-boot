@@ -31,6 +31,16 @@
 #define TWL6030_CHIP_CHARGER	0x49
 #define TWL6030_CHIP_PWM	0x49
 
+#define TWL6032_GPSELECT_ISB	0x35
+
+#define MISC1			0xE4
+#define VAC_MEAS		(1 << 2)
+#define VBAT_MEAS		(1 << 1)
+#define BB_MEAS			(1 << 0)
+
+#define TWL6032_GPADC_CTRL2		0x2f
+#define GPADC_CTRL2_CH18_SCALER_EN	(1 << 2)
+
 /* Battery CHARGER REGISTERS */
 #define CONTROLLER_INT_MASK	0xE0
 #define CONTROLLER_CTRL1	0xE1
@@ -84,8 +94,56 @@
 #define CONTROLLER_CTRL1_EN_CHARGER	(1 << 4)
 #define CONTROLLER_CTRL1_SEL_CHARGER	(1 << 3)
 
+/* CONTROLLER_STAT1 */
+#define CHRG_EXTCHRG_STATZ	(1 << 7)
+#define CHRG_DET_N		(1 << 5)
+#define VAC_DET			(1 << 3)
+#define VBUS_DET		(1 << 2)
+
+#define TOGGLE1		0x90
+#define FGS		(1 << 5)
+#define FGR		(1 << 4)
+#define GPADCS		(1 << 1)
+#define GPADCR		(1 << 0)
+
+#define TWL6032_CTRL_P1		0x36
+#define CTRL_P1_SP1	(1 << 3)
+
+#define CTRL_P2		0x34
+#define CTRL_P2_SP2	(1 << 2)
+#define CTRL_P2_EOCP2	(1 << 1)
+#define CTRL_P2_BUSY	(1 << 0)
+
+#define TWL6030_GPADC_EOC_SW		(1 << 1)
+#define TWL6030_GPADC_BUSY		(1 << 0)
+
+#define GPCH0_LSB	0x57
+#define GPCH0_MSB	0x58
+
+#define TWL6032_GPCH0_LSB	0x3b
+#define TWL6032_GPCH0_MSB	0x3c
+
 #define VUSB_CFG_STATE		0xA2
 #define MISC2			0xE5
+
+#define USB_PRODUCT_ID_LSB	0x02
+
+#define TWL6030_GPADC_VBAT_CHNL	0x07
+#define TWL6032_GPADC_VBAT_CHNL	0x12
+
+
+typedef enum {
+	chip_TWL6030,
+	chip_TWL6032,
+	chip_TWL603X_cnt
+}t_TWL603X_chip_type;
+
+typedef struct{
+	t_TWL603X_chip_type twl_chip_type;
+	u8 rbase;
+	u8 ctrl;
+	u8 enable;
+}t_twl6030_gpadc_data;
 
 void twl6030_init_battery_charging(void);
 void twl6030_usb_device_settings(void);
