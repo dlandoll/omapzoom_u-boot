@@ -192,9 +192,11 @@ void import_efi_partition(struct efi_entry *entry)
 	fastboot_flash_add_ptn(&e);
 
 	if (e.length > 0x100000)
-		printf("%8d %7dM %s\n", e.start, e.length/0x100000, e.name);
+		printf("%8d %7dM %s\n", e.start,
+			(u32)(e.length/0x100000), e.name);
 	else
-		printf("%8d %7dK %s\n", e.start, e.length/0x400, e.name);
+		printf("%8d %7dK %s\n", e.start,
+			(u32)(e.length/0x400), e.name);
 }
 
 static int load_ptbl(void)
