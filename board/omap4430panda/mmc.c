@@ -305,7 +305,7 @@ char * get_partition_sz(char *buf, const char *partname)
 	u32 crc;
 	u32 *szptr = (u32 *) &sz;
 
-	if (mmc_read(1, 0,  (void *)ptbl, sizeof(struct ptable)) != 1){
+	if (mmc_read(0, 0,  (void *)ptbl, sizeof(struct ptable)) != 1){
 		printf("\n ERROR Reading Partition Table \n");
 		return buf;
 	}
