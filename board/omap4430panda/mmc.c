@@ -239,8 +239,7 @@ static struct partition partitions[] = {
 	{ "boot", 8*1024 },
 	{ "system", 512*1024 },
 	{ "cache", 256*1024 },
-	{ "userdata", 512*1024},
-	{ "media", 0 },
+	{ "userdata", 0},
 	{ 0, 0 },
 };
 
