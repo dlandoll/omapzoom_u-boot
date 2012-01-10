@@ -20,6 +20,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <asm/arch/cpu.h>
 #include <asm/io.h>
 #include <asm/types.h>
@@ -39,6 +40,9 @@
 #include <twl4030.h>
 #include <twl6030.h>
 #include <version.h>
+#include <mmc.h>
+/* Android mkbootimg format*/
+#include <bootimg.h>
 
 
 #if defined(CONFIG_FASTBOOT)
@@ -912,6 +916,94 @@ static void fastboot_rx_error()
 
 	/* Clear stall */
 	*peri_rxcsr &= ~MUSB_RXCSR_P_SENTSTALL;
+
+}
+#define ALIGN(n,pagesz) ((n + (pagesz - 1)) & (~(pagesz - 1)))
+static unsigned char boothdr[BOOT_ARGS_SIZE];
+static unsigned char temp_ramdisk[300000];
+int fastboot_update_zimage(struct cmd_fastboot_interface interface)
+{
+	struct fastboot_ptentry *ptn;
+	boot_img_hdr *hdr = (void*) boothdr;
+	unsigned sector = 0;
+	unsigned ramdisk_sector = 0;
+	char source[32], dest[32], length[32];
+	char slot_no[32];
+	char *mmc_init[2] = {"mmcinit", NULL,};
+	char *mmc_write_data[6]  = {"mmc", NULL, "write", NULL, NULL, NULL};
+	unsigned int mmc_controller;
+
+
+	ptn = fastboot_flash_find_ptn("boot");
+	if (ptn == 0) {
+		return -1;
+	}
+
+#if  defined(CONFIG_4430PANDA)
+	/* panda board does not have eMMC on mmc1 */
+	mmc_controller = 0;
+#else
+	/* blaze has emmc on mmc1 */
+	mmc_controller = 1;
+#endif
+	/* Initialize the mmc */
+	mmc_init[1] = slot_no;
+	sprintf(slot_no, "%d", mmc_controller);
+	do_mmc(NULL, 0, 2, mmc_init);
+	/* Read the Boot header */
+	mmc_read(mmc_controller, ptn->start, (void*) hdr, BOOT_ARGS_SIZE);
+
+	/* Save RAMDISK */
+	ramdisk_sector = ptn->start + (hdr->page_size / 512);
+	ramdisk_sector += ALIGN(hdr->kernel_size, hdr->page_size) / 512;
+	mmc_read(mmc_controller, ramdisk_sector, (void*)temp_ramdisk, hdr->ramdisk_size);
+
+	/* Change the kernel size */
+	sector = ptn->start + (hdr->page_size / 512);
+	hdr->kernel_size = interface.data_to_flash_size;
+	/* Write the new header with updated kernel size */
+	mmc_write_data[1] = slot_no;
+	mmc_write_data[3] = source;
+	mmc_write_data[4] = dest;
+	mmc_write_data[5] = length;
+
+	sprintf(slot_no, "%d", mmc_controller);
+	sprintf(source, "0x%x", hdr);
+	sprintf(dest, "0x%x", ptn->start);
+	sprintf(length, "0x%x", BOOT_ARGS_SIZE);
+	/* Write the new kernel size */
+	if(do_mmc(NULL, 0, 6, mmc_write_data)) {
+		printf("Failed write new Kernel size\n");
+		return -1;
+	}
+
+	/* Update the zImage */
+	sprintf(slot_no, "%d", mmc_controller);
+	sprintf(source, "0x%x", interface.transfer_buffer);
+	sprintf(dest, "0x%x", sector);
+	sprintf(length, "0x%x", interface.data_to_flash_size);
+	/* Write the new kernel binary */
+	if(do_mmc(NULL, 0, 6, mmc_write_data)) {
+		printf("Failed write new Kernel\n");
+		return -1;
+	}
+
+	/* Write back the RAMDISK after new kernel*/
+	ramdisk_sector = ptn->start + (hdr->page_size / 512);
+	ramdisk_sector += ALIGN(interface.data_to_flash_size, hdr->page_size) / 512;
+	sprintf(slot_no, "%d", mmc_controller);
+	sprintf(source, "0x%x", temp_ramdisk);
+	sprintf(dest, "0x%x", ramdisk_sector);
+	sprintf(length, "0x%x", hdr->ramdisk_size);
+	/* Write the ramdisk back */
+	if(do_mmc(NULL, 0, 6, mmc_write_data)) {
+		printf("Failed writing back Ramdisk\n");
+		return -1;
+	}
+
+	printf("Done writing zImage to partition '%s'\n", ptn->name);
+
+	return 0;
 
 }
 

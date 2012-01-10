@@ -1192,9 +1192,19 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 					/* blaze has emmc on mmc1 */
 					mmc_controller_no = 1;
 #endif
-
-					/* Next is the partition name */
-					ptn = fastboot_flash_find_ptn(cmdbuf + 6);
+					if ((memcmp(cmdbuf + 6, "zimage", 6) == 0) ||
+					    (memcmp(cmdbuf + 6, "zImage", 6) == 0)) {
+						ret = fastboot_update_zimage(interface);
+						if (ret < 0)
+							sprintf(response, "FAIL");
+						else
+							sprintf(response, "OKAY");
+						ret = 0;
+						goto done;
+					} else {
+						/* Next is the partition name */
+						ptn = fastboot_flash_find_ptn(cmdbuf + 6);
+					}
 
 					if (ptn == 0) {
 						printf("Partition:'%s' does not exist\n", ptn->name);

@@ -311,6 +311,7 @@ extern int fastboot_download(unsigned char *buffer, unsigned int size);
    Returns 0 on success
    Returns 1 on failure */
 extern int fastboot_getvar(const char *rx_buffer, char *tx_buffer);
+extern int fastboot_update_zimage(struct cmd_fastboot_interface interface);
 
 /* board-specific fastboot commands */
 extern int fastboot_oem(const char *command);
