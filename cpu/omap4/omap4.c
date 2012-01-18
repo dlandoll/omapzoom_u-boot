@@ -288,18 +288,33 @@ void ether_init(void)
 u32 sdram_size(void)
 {
 	u32 section, i, total_size = 0, size, addr;
+	u32 sdrc_addrspc;
+	u32 sdrc_map;
+
 	for (i = 0; i < 4; i++) {
 		section	= __raw_readl(DMM_LISA_MAP + i*4);
 		addr = section & DMM_LISA_MAP_SYS_ADDR_MASK;
-		/* See if the address is valid */
-		if ((addr >= OMAP44XX_DRAM_ADDR_SPACE_START) &&
-		    (addr < OMAP44XX_DRAM_ADDR_SPACE_END)) {
-			size	= ((section & DMM_LISA_MAP_SYS_SIZE_MASK) >>
-				    DMM_LISA_MAP_SYS_SIZE_SHIFT);
-			size	= 1 << size;
-			size	*= SZ_16M;
-			total_size += size;
-		}
+		sdrc_addrspc = (section & DMM_LISA_MAP_SDRC_ADDRSPC_MASK) >>
+			DMM_LISA_MAP_SDRC_ADDRSPC_SHIFT;
+		sdrc_map = (section & DMM_LISA_MAP_SDRC_MAP_MASK) >>
+			DMM_LISA_MAP_SDRC_MAP_SHIFT;
+
+		/* Take into account only mapped sections */
+		if (0 == sdrc_map)
+			continue;
+
+		/* Handle only DMM sections which define physical SDRAM
+		 * configuration */
+		if (DMM_SDRC_ADDRSPC_SDRAM != sdrc_addrspc)
+			continue;
+
+		/* update SDRAM size */
+		size	= ((section & DMM_LISA_MAP_SYS_SIZE_MASK) >>
+			    DMM_LISA_MAP_SYS_SIZE_SHIFT);
+		size	= 1 << size;
+		size	*= SZ_16M;
+		total_size += size;
+
 	}
 	return total_size;
 }
