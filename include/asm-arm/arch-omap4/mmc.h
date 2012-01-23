@@ -187,5 +187,14 @@ typedef struct mmc_csd {
 		csd_structure:2;
 } mmc_csd_t;
 
+#ifdef CONFIG_SET_FLASH_SLOT
+extern int board_set_flash_slot(char * slot_name);
+#else
+inline int board_set_flash_slot(char * slot_name);
+{
+	return(-1);
+}
+#endif
+
 
 #endif /* __MMC_OMAP_H__ */

@@ -89,6 +89,9 @@
 #define OMAP44XX_GPT11			0x48088000
 #define OMAP44XX_GPT12			0x48304000
 
+/* Control status register for Boot mode */
+#define OMAP44xx_CONTROL_STATUS	0x4A0022C4
+
 /* WatchDog Timers (1 secure, 3 GP) */
 #define WD1_BASE			(0x4A322000)
 #define WD2_BASE			(0x4A314000)

@@ -25,6 +25,7 @@
  * SUCH DAMAGE.
  *
  */
+#include <asm/io.h>
 
 #include <common.h>
 #include <mmc.h>
@@ -33,6 +34,9 @@
 #define EFI_VERSION 0x00010000
 #define EFI_ENTRIES 128
 #define EFI_NAMELEN 36
+
+/* Default to eMMC slot for omap4430sdp Blaze and Blaze Tablet */
+int mmc_slot = 1;
 
 static const u8 partition_type[16] = {
 	0xa2, 0xa0, 0xd0, 0xeb, 0xe5, 0xb9, 0x33, 0x44,
@@ -84,6 +88,19 @@ struct ptable {
 	};
 	struct efi_entry entry[EFI_ENTRIES];	
 };
+
+int board_set_flash_slot(char * slot_name)
+{
+	int ret = 0;
+	if (!strcmp(slot_name, "SD"))
+		mmc_slot = 0;
+	else if (!strcmp(slot_name, "EMMC"))
+		mmc_slot = 1;
+	else
+		ret = -1;
+
+	return(ret);
+}
 
 static void init_mbr(u8 *mbr, u32 blocks)
 {
@@ -204,7 +221,9 @@ static int load_ptbl(void)
 	static unsigned char data[512];
 	static struct efi_entry entry[4];
 	int n,m,r;
-	r = mmc_read(1, 1, data, 512);
+	printf("ptbl slot: %s:(%d).\n",
+			mmc_slot?"EMMC":"SD", mmc_slot);
+	r = mmc_read(mmc_slot, 1, data, 512);
 	if (r != 1) {
 		printf("error reading partition table\n");
 		return -1;
@@ -214,7 +233,7 @@ static int load_ptbl(void)
 		return -1;
 	}
 	for (n = 0; n < (128/4); n++) {
-		r = mmc_read(1, 1 + n, (void*) entry, 512);
+		r = mmc_read(mmc_slot, 1 + n, (void*) entry, 512);
 		if (r != 1) {
 			printf("partition read failed\n");
 			return 1;
@@ -256,12 +275,13 @@ static int do_format(void)
 	unsigned next;
 	int n;
 
-	if (mmc_init(1)) {
+	printf("Formatting %s(%d) slot.\n", mmc_slot?"EMMC":"SD", mmc_slot);
+	if (mmc_init(mmc_slot)) {
 		printf("mmc init failed?\n");
 		return -1;
 	}
 
-	mmc_info(1, &sector_sz, &blocks);
+	mmc_info(mmc_slot, &sector_sz, &blocks);
 	printf("blocks %d\n", blocks);
 
 	start_ptbl(ptbl, blocks);
@@ -282,7 +302,7 @@ static int do_format(void)
 	end_ptbl(ptbl);
 
 	fastboot_flash_reset_ptn();
-	if (mmc_write(1, (void*) ptbl, 0, sizeof(struct ptable)) != 1)
+	if (mmc_write(mmc_slot, (void*) ptbl, 0, sizeof(struct ptable)) != 1)
 		return -1;
 
 	printf("\nnew partition table:\n");
@@ -307,7 +327,7 @@ char * get_partition_sz(char *buf, const char *partname)
 	u32 crc;
 	u32 *szptr = (u32 *) &sz;
 
-	if (mmc_read(1, 0,  (void *)ptbl, sizeof(struct ptable)) != 1){
+	if (mmc_read(mmc_slot, 0,  (void *)ptbl, sizeof(struct ptable)) != 1){
 		printf("\n ERROR Reading Partition Table \n");
 		return buf;
 	}
@@ -361,13 +381,51 @@ void board_mmc_init(void)
 	/* nothing to do this early */
 }
 
+/**
+*  get_boot_slot: Returns boot from SD or eMMC
+* @ret: 0:SD	1:eMMC
+*/
+static int get_boot_slot(void)
+{
+	u32 control_register = __raw_readl(OMAP44xx_CONTROL_STATUS);
+
+	if (control_register & 0x5)
+		return 0;
+	else
+		return 1;
+}
+
 int board_late_init(void)
 {
-	if (mmc_init(1)) {
+	int i;
+	char booticmd[20];
+	int boot_slot = get_boot_slot();
+
+	/* If we booted off of SD slot, initialize SD card as well. */
+	if (boot_slot == 0) {
+		printf("Initializing SD(0) Slot.\n");
+		/* Temporarily set mmc_slot to SD */
+		mmc_slot = 0;
+		if (mmc_init(boot_slot)) {
+			printf("mmc init failed?\n");
+			return 1;
+		}
+		load_ptbl();
+	}
+
+	/* Default back to eMMC(1) slot
+	  * If someone wants to flash all partitions to SD slot
+	  * they need to explicty give "fastboot oem set_boot_slot:SD"
+	  */
+	mmc_slot = 1;
+
+	if (mmc_init(mmc_slot)) {
 		printf("mmc init failed?\n");
 		return 1;
 	}
-	printf("\nefi partition table:\n");
+	sprintf(booticmd, "booti mmc%d", boot_slot);
+	setenv("bootcmd", booticmd);
+	printf("efi partition table:\n");
 	return load_ptbl();
 }
 

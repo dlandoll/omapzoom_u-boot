@@ -36,6 +36,7 @@
 #define CONFIG_OMAP4430		1    /* which is in a 4430 */
 #define CONFIG_4430SDP		1    /* working with SDP */
 #define CONFIG_FASTBOOT		1    /* Using fastboot interface */
+#define CONFIG_SET_FLASH_SLOT	1	/* Set Flash slot to SD or EMMC */
 
 #define BOARD_LATE_INIT 1
 

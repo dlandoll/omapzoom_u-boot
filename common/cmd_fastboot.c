@@ -106,6 +106,7 @@ static unsigned int download_bytes;
 static unsigned int download_bytes_unpadded;
 static unsigned int download_error;
 static unsigned int mmc_controller_no;
+extern int mmc_slot;
 
 static void set_env(char *var, char *val)
 {
@@ -819,6 +820,17 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 				goto done;
 			}
 
+			if(memcmp(cmdbuf, "set_flash_slot", 14) == 0) {
+				if (!board_set_flash_slot(cmdbuf +strlen("set_flash_slot:")))
+					sprintf(response, "OKAY");
+				else {
+					printf("Setting Flash Slot: Not supported on this target\n");
+					sprintf(response, "FAIL");
+				}
+				printf("mmc_slot = %d \n", mmc_slot);
+				goto done;
+			}
+
 			/* fastboot oem [xxx] */
 			printf("\nfastboot: do not understand oem %s\n", cmdbuf);
 			strcpy(response,"FAIL");
@@ -887,13 +899,7 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 				struct fastboot_ptentry *ptn;
 
 				/* Save the MMC controller number */
-#if  defined(CONFIG_4430PANDA)
-				/* panda board does not have eMMC on mmc1 */
-				mmc_controller_no = 0;
-#else
-				/* blaze has emmc on mmc1 */
-				mmc_controller_no = 1;
-#endif
+				mmc_controller_no = mmc_slot;
 
 				/* Find the partition and erase it */
 				ptn = fastboot_flash_find_ptn(cmdbuf + 6);
@@ -1185,13 +1191,8 @@ static int rx_handler(const unsigned char *buffer, unsigned int buffer_size)
 					char *argv[2] = {NULL, "-f"};
 
 					/* Save the MMC controller number */
-#if  defined(CONFIG_4430PANDA)
-					/* panda board does not have eMMC on mmc1 */
-					mmc_controller_no = 0;
-#else
-					/* blaze has emmc on mmc1 */
-					mmc_controller_no = 1;
-#endif
+					mmc_controller_no = mmc_slot;
+
 					if ((memcmp(cmdbuf + 6, "zimage", 6) == 0) ||
 					    (memcmp(cmdbuf + 6, "zImage", 6) == 0)) {
 						ret = fastboot_update_zimage(interface);

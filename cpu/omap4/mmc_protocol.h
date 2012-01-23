@@ -110,6 +110,8 @@
 #define MMC_CSD_TRAN_SPEED_FACTOR_1_0       (0x01 << 3)
 #define MMC_CSD_TRAN_SPEED_FACTOR_8_0       (0x0F << 3)
 
+#define MMC_READY_FOR_DATA (0x01 << 8)
+
 static const unsigned int tran_exp[] = {
 	10000,          100000,         1000000,        10000000,
 	0,              0,              0,              0

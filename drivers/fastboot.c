@@ -921,6 +921,7 @@ static void fastboot_rx_error()
 #define ALIGN(n,pagesz) ((n + (pagesz - 1)) & (~(pagesz - 1)))
 static unsigned char boothdr[BOOT_ARGS_SIZE];
 static unsigned char temp_ramdisk[300000];
+extern int mmc_slot;
 int fastboot_update_zimage(struct cmd_fastboot_interface interface)
 {
 	struct fastboot_ptentry *ptn;
@@ -933,19 +934,13 @@ int fastboot_update_zimage(struct cmd_fastboot_interface interface)
 	char *mmc_write_data[6]  = {"mmc", NULL, "write", NULL, NULL, NULL};
 	unsigned int mmc_controller;
 
-
 	ptn = fastboot_flash_find_ptn("boot");
 	if (ptn == 0) {
 		return -1;
 	}
 
-#if  defined(CONFIG_4430PANDA)
-	/* panda board does not have eMMC on mmc1 */
-	mmc_controller = 0;
-#else
-	/* blaze has emmc on mmc1 */
-	mmc_controller = 1;
-#endif
+	mmc_controller = mmc_slot;
+
 	/* Initialize the mmc */
 	mmc_init[1] = slot_no;
 	sprintf(slot_no, "%d", mmc_controller);
@@ -1343,6 +1338,7 @@ int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
 	return ret;
 }
 extern char * get_partition_sz(char *buf, const char *partname);
+extern int mmc_slot;
 
 int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 {
@@ -1373,6 +1369,8 @@ int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 			strcpy(all_response + strlen(all_response), fastboot_interface->proc_version);
 	} else if(!strcmp(rx_buffer, "userdata_size")) {
 		strcpy(all_response + strlen(all_response), get_partition_sz(all_response + strlen(all_response), "userdata"));
+	} else if (!strcmp(rx_buffer, "get_flash_slot")) {
+		strcpy(all_response + strlen(all_response), mmc_slot?"EMMC(1)":"SD(0)");
 	} else if(!strcmp(rx_buffer, "all")) {
 		strcpy(all_response, "INFO");
 		strcpy(all_response + strlen(all_response), "product: ");

@@ -34,6 +34,17 @@
 #define EFI_ENTRIES 128
 #define EFI_NAMELEN 36
 
+/* Default to SD slot for omap4430panda
+  * Not replacing slot hard coding with mmc_slot
+  * in the rest of this file as panda does not have
+  * eMMC and as a result switching between eMMC
+  * and SD is not possible. Giving
+  * fastboot oem set_flash_slot:EMMC command
+  * to Panda will not change mmc_slot!
+  */
+int mmc_slot = 0;
+
+
 static const u8 partition_type[16] = {
 	0xa2, 0xa0, 0xd0, 0xeb, 0xe5, 0xb9, 0x33, 0x44,
 	0x87, 0xc0, 0x68, 0xb6, 0xb7, 0x26, 0x99, 0xc7,
