@@ -63,6 +63,7 @@
 #include <sparse.h>
 #include <environment.h>
 #include <version.h>
+#include <mmc.h>
 
 #if (CONFIG_FASTBOOT)
 

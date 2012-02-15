@@ -188,11 +188,11 @@ typedef struct mmc_csd {
 } mmc_csd_t;
 
 #ifdef CONFIG_SET_FLASH_SLOT
-extern int board_set_flash_slot(char * slot_name);
+int board_set_flash_slot(char * slot_name);
 #else
-inline int board_set_flash_slot(char * slot_name);
+static inline int board_set_flash_slot(char * slot_name)
 {
-	return(-1);
+	return -1;
 }
 #endif
 
