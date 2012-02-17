@@ -142,6 +142,8 @@ void twl6030_init_battery_charging(void)
 	int ret = 0;
 	t_twl6030_gpadc_data gpadc;
 	u8 val;
+	int abort = 0;
+	int chargedelay = 5;
 
 	gpadc.twl_chip_type = chip_TWL6030;
 	gpadc.rbase = GPCH0_LSB;
@@ -184,14 +186,59 @@ void twl6030_init_battery_charging(void)
 		return;
 
 	if (battery_volt < 3400) {
-		printf("Main battery voltage too low!\n");
-		printf("Charging...\n");
-		/* wait for battery to charge to the level when kernel can boot */
-		while (battery_volt < 3400) {
-			battery_volt = twl6030_get_battery_voltage(&gpadc);
-			printf("\rBattery Voltage: %d mV", battery_volt);
+
+	#ifdef CONFIG_SILENT_CONSOLE
+		if (gd->flags & GD_FLG_SILENT) {
+			/* Restore serial console */
+			console_assign (stdout, "serial");
+			console_assign (stderr, "serial");
 		}
-		printf("\n");
+	#endif
+
+		printf("Main battery voltage too low!\n");
+		printf("Hit any key to stop charging: %2d ", chargedelay);
+
+		if (tstc()) {	/* we got a key press	*/
+			(void) getc();  /* consume input	*/
+		}
+
+		while ((chargedelay > 0) && (!abort)) {
+			int i;
+
+			--chargedelay;
+			/* delay 100 * 10ms */
+			for (i=0; !abort && i<100; ++i) {
+				if (tstc()) {	/* we got a key press	*/
+					abort  = 1;	/* don't auto boot	*/
+					chargedelay = 0;	/* no more delay	*/
+					(void) getc();  /* consume input	*/
+					break;
+				}
+				udelay (10000);
+			}
+			printf ("\b\b\b%2d ", chargedelay);
+		}
+		putc ('\n');
+
+	#ifdef CONFIG_SILENT_CONSOLE
+		if (gd->flags & GD_FLG_SILENT) {
+			/* Restore silent console */
+			console_assign (stdout, "nulldev");
+			console_assign (stderr, "nulldev");
+		}
+	#endif
+
+		if (!abort)
+		{
+			printf("Charging...\n");
+
+			/* wait for battery to charge to the level when kernel can boot */
+			while (battery_volt < 3400) {
+				battery_volt = twl6030_get_battery_voltage(&gpadc);
+				printf("\rBattery Voltage: %d mV", battery_volt);
+			}
+			printf("\n");
+		}
 	}
 }
 
