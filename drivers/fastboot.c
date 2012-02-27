@@ -1456,13 +1456,18 @@ int fastboot_preboot(void)
 	/* On Panda: 4430: GPIO_121 button pressed causes to enter fastboot
 	 * 	     4460: GPIO_113 button pressed causes to enter fastboot */
 	int cpu_rev = get_cpu_rev();
+	int gpio_read = 0x0;
 
 	if (cpu_rev >= OMAP4460_REV_ES1_0) {
+		gpio_read = __raw_readl(OMAP44XX_CTRL_BASE + CONTROL_PADCONF_ABE_MCBSP2_FSX);
+		__raw_writel((gpio_read | 0x1b), OMAP44XX_CTRL_BASE + CONTROL_PADCONF_ABE_MCBSP2_FSX);
 		if (!(__raw_readl(OMAP44XX_GPIO4_BASE + DATA_IN_OFFSET) & (1<<17))){
 			printf("Panda: GPIO_113 pressed: entering fastboot....\n");
 			return 1;
 		}
 	} else {
+		gpio_read = __raw_readl(OMAP44XX_CTRL_BASE + CONTROL_PADCONF_ABE_DMIC_DIN2);
+		__raw_writel((gpio_read | 0x1b), OMAP44XX_CTRL_BASE + CONTROL_PADCONF_ABE_DMIC_DIN2);
 		if (!(__raw_readl(OMAP44XX_GPIO4_BASE + DATA_IN_OFFSET) & (1<<25))){
 			printf("Panda: GPIO_121 pressed: entering fastboot....\n");
 			return 1;
