@@ -1532,7 +1532,7 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	val[3] = __raw_readl(reg + 0x10);
 
 	serial_len = sprintf(serial_str, " androidboot.serialno=%08X%08X",
-			val[3], val[2]);
+			val[1], val[0]);
 
 	if(sizeof(hdr->cmdline) >= (serial_len + strlen(hdr->cmdline) + 1))
 		strcat(hdr->cmdline, serial_str);
