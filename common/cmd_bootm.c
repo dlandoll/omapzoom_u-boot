@@ -1522,6 +1522,8 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	unsigned serial_len;
 	char boot_str[128];
 	unsigned boot_len;
+	char *extracmd_str;
+	unsigned extracmd_len;
 
 	reg = DIE_ID_REG_BASE + DIE_ID_REG_OFFSET;
 	val[0] = __raw_readl(reg);
@@ -1541,6 +1543,18 @@ int do_booti (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if(sizeof(hdr->cmdline) >= (boot_len + strlen(hdr->cmdline) + 1))
 		strcat(hdr->cmdline, boot_str);
+	/* extra command line parameters
+	 * Extra parameters for kernel command line could be passed via
+	 * environment variable
+	 */
+	extracmd_str = getenv("android.bootargs.extra");
+	if (extracmd_str) {
+		extracmd_len = strlen(extracmd_str);
+		if (sizeof(hdr->cmdline) >
+				(extracmd_len + strlen(hdr->cmdline)))
+			strcat((char *)hdr->cmdline, extracmd_str);
+	}
+
 #endif
 
 	do_booti_linux(hdr);
