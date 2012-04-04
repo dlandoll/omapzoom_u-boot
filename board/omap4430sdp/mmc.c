@@ -387,9 +387,9 @@ void board_mmc_init(void)
 */
 static int get_boot_slot(void)
 {
-	u32 control_register = __raw_readl(OMAP44xx_CONTROL_STATUS);
+	u32 control_register = __raw_readl(OMAP44xx_BOOT_DEVICE);
 
-	if (control_register & 0x5)
+	if ((control_register & 0xff) == 0x5)
 		return 0;
 	else
 		return 1;

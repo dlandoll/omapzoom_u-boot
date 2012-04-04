@@ -92,6 +92,9 @@
 /* Control status register for Boot mode */
 #define OMAP44xx_CONTROL_STATUS	0x4A0022C4
 
+/* Boot device type stored in scratchpad */
+#define OMAP44xx_BOOT_DEVICE	0x4A326000
+
 /* WatchDog Timers (1 secure, 3 GP) */
 #define WD1_BASE			(0x4A322000)
 #define WD2_BASE			(0x4A314000)
