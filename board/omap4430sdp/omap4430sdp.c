@@ -25,6 +25,9 @@
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 
+/* function protypes */
+extern int omap4_mmc_init(void);
+
 #define		OMAP44XX_WKUP_CTRL_BASE		0x4A31E000
 #if 1
 #define M0_SAFE M0
@@ -492,6 +495,20 @@ int board_init(void)
 	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
 
 	return 0;
+}
+
+
+/*****************************************
+ * Routine: board_late_init
+ * Description: Late hardware init.
+ *****************************************/
+int board_late_init(void)
+{
+	int status;
+
+	status = omap4_mmc_init();
+
+	return status;
 }
 
 /****************************************************************************

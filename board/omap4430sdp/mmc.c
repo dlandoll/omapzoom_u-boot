@@ -395,7 +395,7 @@ static int get_boot_slot(void)
 		return 1;
 }
 
-int board_late_init(void)
+int omap4_mmc_init(void)
 {
 	int i;
 	char booticmd[20];
