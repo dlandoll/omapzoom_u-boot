@@ -24,9 +24,14 @@
 #include <asm/arch/mux.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
+#include <i2c.h>
 
 /* function protypes */
 extern int omap4_mmc_init(void);
+extern int select_bus(int, int);
+#if defined(OMAP44XX_TABLET_CONFIG)
+static int tablet_check_display_boardid(void);
+#endif
 
 #define		OMAP44XX_WKUP_CTRL_BASE		0x4A31E000
 #if 1
@@ -506,7 +511,15 @@ int board_late_init(void)
 {
 	int status;
 
-	status = omap4_mmc_init();
+	/* mmc */
+	if( (status = omap4_mmc_init()) != 0) {
+		return status;
+	}
+
+#if defined(OMAP44XX_TABLET_CONFIG)
+	/* Query display board EEPROM information */
+	status = tablet_check_display_boardid();
+#endif
 
 	return status;
 }
@@ -559,3 +572,96 @@ u32 get_board_type(void)
 {
 	return SDP_4430_V1;
 }
+
+#if defined(OMAP44XX_TABLET_CONFIG)
+/***********************************************************************
+ * tablet_pass_boardid()
+ *  Pass display board id to kernel via setting environment variables.
+ ************************************************************************/
+static void tablet_pass_boardid(char *sPanel_id)
+{
+	char buf[256] = { 0 };
+	char *cmdline;
+	int len;
+
+#if defined(CONFIG_OMAP4_ANDROID_CMD_LINE)
+	cmdline = getenv("android.bootargs.extra");
+#else
+	cmdline = getenv("bootargs");
+#endif
+
+	/* existing cmdline? */
+	if (cmdline)
+		strncpy(buf, cmdline, sizeof(buf) - 1);
+
+	/* does it fit? */
+	len = strlen(buf) + strlen(sPanel_id) + 18;
+	if (sizeof(buf) < len)
+		return;
+
+	strcat(buf, " omapdss.board_id=");
+	strcat(buf, sPanel_id);
+
+#if defined(CONFIG_OMAP4_ANDROID_CMD_LINE)
+	setenv("android.bootargs.extra", buf);
+#else
+	setenv("bootargs", buf);
+#endif
+	return;
+}
+/***********************************************************************
+ * tablet_read_i2c()
+ *  Selects required i2c bus
+ *  Reads data from i2c device.
+ *  Restores default i2c settings
+ ************************************************************************/
+static int tablet_read_i2c(int bus, uchar chip, int off, char *sBuf, int len)
+{
+	int status;
+
+	/* configure I2C bus */
+	if ((status = select_bus(bus, CFG_I2C_SPEED)) != 0 ) {
+		printf("Setting bus[%d]: FAILED", bus);
+		return status;
+	}
+
+	/* is present? */
+	if ((status = i2c_probe(chip)) !=0 ) {
+		debug("Probing %x failed\n", (int) chip);
+		return status;
+	}
+
+	/* read buffer */
+	status = i2c_read(chip, off, 1, (uchar *)sBuf, len);
+
+	/* restore default settings */
+	if (select_bus(CFG_I2C_BUS, CFG_I2C_SPEED) != 0)
+		printf("Setting i2c defaults: FAILED\n");
+
+	return status;
+}
+/***********************************************************************
+ * tablet_check_display_boardid() - check display board id.
+ *  Reads display board EEPROM information and modifies bootargs to pass
+ *  board information to kernel as "omapdss.board_id".
+ ************************************************************************/
+static int tablet_check_display_boardid(void)
+{
+	char sBuf[10] = { 0 };
+	int status;
+
+	/* Read display board eeprom:
+	 *  12-19  board information (XXXX-XXX)
+	 */
+	status = tablet_read_i2c(CFG_DISP_I2C_BUS,
+				 CFG_DISP_EEPROM_I2C_ADDR, 12, sBuf, 8);
+	/* pass information to kernel */
+	if (!status) {
+		debug("board_id: %s\n", sBuf);
+		tablet_pass_boardid((char *)sBuf);
+	}
+
+	return 0;
+}
+#endif
+
