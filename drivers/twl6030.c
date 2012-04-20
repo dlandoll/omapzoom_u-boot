@@ -181,6 +181,13 @@ void twl6030_init_battery_charging(void)
 		return;
 	}
 
+	/*
+	 * Make dummy conversion for the TWL6032
+	 * (first conversion may be failed)
+	 */
+	if (gpadc.twl_chip_type == chip_TWL6032)
+		twl6030_gpadc_sw2_trigger(&gpadc);
+
 	battery_volt = twl6030_get_battery_voltage(&gpadc);
 	if (battery_volt < 0)
 		return;
