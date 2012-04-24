@@ -1586,8 +1586,8 @@ int fastboot_init(struct cmd_fastboot_interface *interface)
 	val[1] = __raw_readl(reg + 0x8);
 	val[2] = __raw_readl(reg + 0xC);
 	val[3] = __raw_readl(reg + 0x10);
-	printf("Device Serial Number: %08X%08X\n", val[3], val[2]);
-	sprintf(device_serial, "%08X%08X", val[3], val[2]);
+	printf("Device Serial Number: %08X%08X\n", val[1], val[0]);
+	sprintf(device_serial, "%08X%08X", val[1], val[0]);
 
 	device_strings[DEVICE_STRING_SERIAL_NUMBER_INDEX] = device_serial;
 #else
