@@ -137,7 +137,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootcmd=go 0x80008000\0"
 #else
-#define CONFIG_BOOTDELAY         0
+#define CONFIG_BOOTDELAY         3
 
 #endif /*CONFIG_4430ZEBU */
 
